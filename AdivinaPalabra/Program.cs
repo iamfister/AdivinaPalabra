@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-var palabrasSugeridas = new List<string>() { "programacion", "dotnet", "csharp", "trnetwork", "javascript" };
+var palabrasSugeridas = new List<string> { "programacion", "dotnet", "csharp", "trnetwork", "javascript" };
 
 int intentosMaximos = 5;
 int intentosRealizados = 0;
@@ -8,22 +8,72 @@ bool adivinado = false;
 
 Console.WriteLine("¡Bienvenido al juego de adivinar la palabra!");
 
-var palabraSecreta = ObtenerPalabraSecreta(palabrasSugeridas, out var palabraSecretaParaUsuario);
+var palabraSecreta = ObtenerPalabraSecreta(palabrasSugeridas,
+    out var palabraSecretaParaUsuario,
+    out var caracteresSecretos);
 
 Console.WriteLine($"Tienes que adivinar la siguiente palabra {palabraSecretaParaUsuario}.");
+
+string auxPalabraSecreta = palabraSecretaParaUsuario.ToString();
 
 while (!adivinado && intentosRealizados < intentosMaximos)
 {
     Console.Write("Introduce tu intento: ");
-    string intento = Console.ReadLine();
+    var intento = Console.ReadLine();
 
-    if (intento?.ToLower() == palabraSecreta)
+    if (string.IsNullOrEmpty(intento))
+    {
+        intentosRealizados++;
+        Console.WriteLine("Intento incorrecto. Te quedan " + (intentosMaximos - intentosRealizados) + " intentos.");
+        continue;
+    }
+
+    intento = intento.Trim().ToLower();
+
+    if (intento.Length > palabraSecreta.Length)
+    {
+        intentosRealizados++;
+        Console.WriteLine("Intento incorrecto. Te quedan " + (intentosMaximos - intentosRealizados) + " intentos.");
+        continue;
+    }
+
+    if (intento == palabraSecreta)
     {
         adivinado = true;
         Console.WriteLine("¡Felicidades! ¡Has adivinado la palabra!");
     }
     else
     {
+        if (intento.Length > 1)
+        {
+            intentosRealizados++;
+            Console.WriteLine("Intento incorrecto. Te quedan " + (intentosMaximos - intentosRealizados) + " intentos.");
+            continue;
+        }
+        
+        if (caracteresSecretos.Any(p => p.Value == intento[0]))
+        {
+            var obtenerCaracterSecreto = 
+                caracteresSecretos.FirstOrDefault(p => p.Value == intento[0]);
+
+            var sb = new StringBuilder(auxPalabraSecreta)
+            {
+                [obtenerCaracterSecreto.Key] = obtenerCaracterSecreto.Value
+            };
+
+            auxPalabraSecreta = sb.ToString();
+
+            Console.WriteLine(auxPalabraSecreta);
+
+            if (auxPalabraSecreta == palabraSecreta)
+            {
+                adivinado = true;
+                Console.WriteLine("¡Felicidades! ¡Has adivinado la palabra!");
+            }
+            
+            continue;
+        }
+        
         intentosRealizados++;
         Console.WriteLine("Intento incorrecto. Te quedan " + (intentosMaximos - intentosRealizados) + " intentos.");
     }
@@ -34,45 +84,56 @@ if (!adivinado)
     Console.WriteLine("¡Has agotado todos tus intentos! La palabra secreta era: " + palabraSecreta);
 }
 
-string ObtenerPalabraSecreta(List<string> listaPalabrasSecretas, out StringBuilder stringBuilder)
+return;
+
+string ObtenerPalabraSecreta(
+    IReadOnlyList<string> listaPalabrasSecretas, 
+    out StringBuilder stringBuilder, 
+    out Dictionary<int, char> caracteresSecretos)
 {
-    Random rnd = new Random();
-    int randIndex = rnd.Next(listaPalabrasSecretas.Count);
-
-    var obtenerPalabraSecreta = listaPalabrasSecretas[randIndex];
-
-    stringBuilder = new StringBuilder();
-
-    int numGuiones = 0;
-
-    for (int i = 0; i < obtenerPalabraSecreta.Length; i++)
+    while (true)
     {
-        randIndex = rnd.Next(obtenerPalabraSecreta.Length);
+        caracteresSecretos = [];
+        
+        Random rnd = new Random();
+        int randIndex = rnd.Next(listaPalabrasSecretas.Count);
 
-        if (i == randIndex)
+        var obtenerPalabraSecreta = listaPalabrasSecretas[randIndex];
+
+        stringBuilder = new StringBuilder();
+
+        int numGuiones = 0;
+
+        for (int i = 0; i < obtenerPalabraSecreta.Length; i++)
         {
-            stringBuilder.Append('_');
-            numGuiones++;
+            randIndex = rnd.Next(obtenerPalabraSecreta.Length);
+
+            if (i == randIndex)
+            {
+                stringBuilder.Append('_');
+                numGuiones++;
+                caracteresSecretos.Add(i, obtenerPalabraSecreta[i]);
+                continue;
+            }
+
+            stringBuilder.Append(obtenerPalabraSecreta[i]);
+        }
+
+        if (numGuiones == 0)
+        {
             continue;
         }
-    
-        stringBuilder.Append(obtenerPalabraSecreta[i]);
+
+        int valorTotal = obtenerPalabraSecreta.Length;
+        int porcentajeMaximoPermitido = 60;
+
+        var resultadoPorcentajeMaximoPermitido = (valorTotal * porcentajeMaximoPermitido) / 100;
+
+        if (numGuiones > resultadoPorcentajeMaximoPermitido)
+        {
+            continue;
+        }
+
+        return obtenerPalabraSecreta;
     }
-
-    if (numGuiones == 0)
-    {
-        ObtenerPalabraSecreta(listaPalabrasSecretas, out stringBuilder);
-    }
-
-    int valorTotal = obtenerPalabraSecreta.Length;
-    int porcentajeMaximoPermitido = 60;
-
-    var resultadoPorcentajeMaximoPermitido  = (valorTotal * porcentajeMaximoPermitido) / 100;
-
-    if (numGuiones > resultadoPorcentajeMaximoPermitido)
-    {
-        ObtenerPalabraSecreta(listaPalabrasSecretas, out stringBuilder);
-    }
-
-    return obtenerPalabraSecreta;
 }
