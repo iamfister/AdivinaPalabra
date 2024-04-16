@@ -1,6 +1,16 @@
 ﻿using System.Text;
 
-var palabrasSugeridas = new List<string> { "programacion", "dotnet", "csharp", "trnetwork", "javascript" };
+var palabrasSugeridas = new List<string>
+{
+    "programacion", 
+    "dotnet", 
+    "csharp", 
+    "trnetwork", 
+    "javascript",
+    "gintama",
+    "ingenieria",
+    "konosuba"
+};
 
 int intentosMaximos = 5;
 int intentosRealizados = 0;
